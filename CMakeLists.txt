@@ -66,7 +66,7 @@ foreach(_build_type "Release" "MinSizeRel" "RelWithDebInfo")
   endforeach()
 endforeach()
 
-
+find_package(GnuTLS 3.6.11)
 find_package(OpenSSL 1.1.1)
 find_package(Libev 4.11)
 find_package(Libnghttp3 0.0.0)
@@ -89,6 +89,39 @@ endif()
 set(HAVE_LIBEV      ${LIBEV_FOUND})
 # libnghttp3 (for examples)
 set(HAVE_LIBNGHTTP3 ${LIBNGHTTP3_FOUND})
+
+# GnuTLS (for examples)
+set(HAVE_GNUTLS    ${GNUTLS_FOUND})
+if(GNUTLS_FOUND)
+
+  set(GNUTLS_INCLUDE_DIRS  ${GNUTLS_INCLUDE_DIR})
+
+  # Check for required API
+  check_function_exists(gnutls_hanshake_set_secret_function
+                        HAVE_GNUTLS_HANDSHAKE_SET_SECRET_FUNCTION)
+  check_function_exists(gnutls_hkdf_expand
+                        HAVE_GNUTLS_HKDF_EXPAND)
+  check_function_exists(gnutls_hkdf_extract
+                        HAVE_GNUTLS_HKDF_EXTRACT)
+  check_function_exists(gnutls_record_set_write_function
+                        HAVE_GNUTLS_RECORD_SET_WRITE_FUNCTION)
+  check_function_exists(gnutls_record_push_data
+                        HAVE_GNUTLS_RECORD_PUSH_DATA)
+  #TODO add function for getting/pushing data to TLS
+  if (HAVE_GNUTLS_HANDSHAKE_SET_SECRET_FUNCTION AND
+      HAVE_GNUTLS_HKDF_EXPAND AND
+      HAVE_GNUTLS_HKDF_EXTRACT AND
+      HAVE_GNUTLS_RECORD_SET_WRITE_FUNCTION AND
+      HAVE_GNUTLS_RECORD_PUSH_DATA)
+      set(HAVE_GNUTLS_QUIC 1)
+  else ()
+      set(HAVE_GNUTLS_QUIC 0)
+  endif()
+
+else()
+  set(GNUTLS_INCLUDE_DIRS  "")
+  set(GNUTLS_LIBRARIES     "")
+endif()
 
 # Checks for header files.
 include(CheckIncludeFile)
@@ -280,4 +313,5 @@ message(STATUS "summary of build options:
       OpenSSL:        ${HAVE_OPENSSL} (LIBS='${OPENSSL_LIBRARIES}')
       Libev:          ${HAVE_LIBEV} (LIBS='${LIBEV_LIBRARIES}')
       Libnghttp3:     ${HAVE_LIBNGHTTP3} (LIBS='${LIBNGHTTP3_LIBRARIES}')
+      GnuTLS:         ${HAVE_GNUTLS_QUIC} (LIBS='${GNUTLS_LIBRARIES}')
 ")

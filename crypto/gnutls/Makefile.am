@@ -1,6 +1,6 @@
 # ngtcp2
 
-# Copyright (c) 2019 ngtcp2 contributors
+# Copyright (c) 2020 ngtcp2 contributors
 
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -20,12 +20,20 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-SUBDIRS =
+AM_CFLAGS = $(WARNCFLAGS) $(DEBUGCFLAGS) $(EXTRACFLAG)
+AM_CPPFLAGS = -I$(top_srcdir)/lib/includes -I$(top_builddir)/lib/includes \
+	-I$(top_srcdir)/lib -DBUILDING_NGTCP2 \
+	-I$(top_srcdir)/crypto/includes -I$(top_builddir)/crypto/includes \
+	@GNUTLS_CFLAGS@
 
-if HAVE_OPENSSL
-SUBDIRS += includes openssl
-endif
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = libngtcp2_crypto_gnutls.pc
+DISTCLEANFILES = $(pkgconfig_DATA)
 
-if HAVE_GNUTLS_QUIC
-SUBDIRS += includes gnutls
-endif
+lib_LTLIBRARIES = libngtcp2_crypto_gnutls.la
+
+libngtcp2_crypto_gnutls_la_SOURCES = gnutls.c ../shared.c ../shared.h
+libngtcp2_crypto_gnutls_la_LDFLAGS = -no-undefined \
+	-version-info $(CRYPTO_GNUTLS_LT_CURRENT):$(CRYPTO_GNUTLS_LT_REVISION):$(CRYPTO_GNUTLS_LT_AGE) \
+	@JEMALLOC_LIBS@ @GNUTLS_LIBS@
+libngtcp2_crypto_gnutls_la_LIBADD = $(top_builddir)/lib/libngtcp2.la
